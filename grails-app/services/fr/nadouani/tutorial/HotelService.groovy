@@ -8,17 +8,20 @@ class HotelService {
 		return Hotel.list()
 	}
 	
-	Hotel getHotel(int id){
+	Hotel get(int id){
 		return Hotel.get(id)
 	}
 	
 	Hotel save(Hotel hotel){
-		hotel.save(flush:true)
+		Hotel h = Hotel.get(hotel.id)
+		h.properties = hotel.properties
 		
-		return hotel
+		h.save(flush:true)
+		
+		return h
 	}
 	
-	Hotel delete(Hotel hotel){
+	Hotel remove(Hotel hotel){
 		hotel.delete(flush:true)
 	}
 }
