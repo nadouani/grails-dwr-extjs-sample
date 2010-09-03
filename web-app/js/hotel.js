@@ -1,6 +1,6 @@
 Ext.ns('App', 'App.hotel');
 
-App.hotel.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
+App.hotel.Grid = Ext.extend(Ext.grid.GridPanel, {
 	renderTo: 'hotel-grid',
 	iconCls: 'silk-hotel',
     frame: true,
@@ -8,6 +8,10 @@ App.hotel.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
     height: 300,
     width: 800,
     style: 'margin-top: 10px',
+    editor : new Ext.ux.grid.RowEditor({
+    	saveText: 'Update',
+    	clicksToEdit :2
+	}),
 
     initComponent : function() {
 
@@ -23,7 +27,9 @@ App.hotel.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
         this.cm = this.buildColumnModel();
         this.tbar = this.buildTopToolbar();
         this.bbar = this.buildBottomToolbar();
-
+        
+        this.plugins = [this.editor]
+        
         // super
         App.hotel.Grid.superclass.initComponent.call(this);
     },
@@ -38,15 +44,40 @@ App.hotel.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
 	          sortable: true // columns are not sortable by default           
 	      	},
 	      	columns: [
+  	          	new Ext.grid.RowNumberer(),	      	          
 	      	    { header: '#', readOnly: true, dataIndex: "id", width: 40, hidden: false},
-	      	    { header: 'Name', dataIndex: "name", width:150, editor: defaultEditor},
-	      	    { header: 'Website', dataIndex: "website", width:150, editor: defaultEditor},
-				{ header: 'Phone', dataIndex: "phoneNumber", editor: defaultEditor},
-				{ header: 'City', dataIndex: "city", editor: defaultEditor},
-				{ header: 'Country', dataIndex: "country", editor: defaultEditor},
-				{ header: '# Stars', dataIndex: "stars", width:50, editor: defaultEditor},
-				{ header: '# Rooms', dataIndex: "rooms", width:60, editor: defaultEditor},
-				{ header: '# Beds', dataIndex: "beds", width:50, editor: defaultEditor},
+	      	    { header: 'Name', dataIndex: "name", width:150, editor: {
+	                xtype: 'textfield',
+	                allowBlank: false
+	            }},
+	      	    { header: 'Website', dataIndex: "website", width:150, editor: {
+	                xtype: 'textfield',
+	                allowBlank: false
+	            }},
+				{ header: 'Phone', dataIndex: "phoneNumber", editor: {
+	                xtype: 'textfield',
+	                allowBlank: false
+	            }},
+				{ header: 'City', dataIndex: "city", editor: {
+	                xtype: 'textfield',
+	                allowBlank: false
+	            }},
+				{ header: 'Country', dataIndex: "country", editor: {
+	                xtype: 'textfield',
+	                allowBlank: false
+	            }},
+				{ header: '# Stars', dataIndex: "stars", width:50, editor: {
+	                xtype: 'textfield',
+	                allowBlank: false
+	            }},
+				{ header: '# Rooms', dataIndex: "rooms", width:60, editor: {
+	                xtype: 'textfield',
+	                allowBlank: false
+	            }},
+				{ header: '# Beds', dataIndex: "beds", width:50, editor: {
+	                xtype: 'textfield',
+	                allowBlank: false
+	            }},
 	        ]
 	    })
     },
@@ -62,38 +93,9 @@ App.hotel.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
             iconCls: 'silk-delete',
             handler: this.onDelete,
             scope: this
-        }, '-'];
-    },
-
-    buildBottomToolbar : function() {
-        return [{
-            text: 'autoSave',            
-            iconCls: 'silk-auto-save',
-            enableToggle: true,
-            tooltip: 'When enabled, Store will execute Ajax requests as soon as a Record becomes dirty.',
-            toggleHandler: function(btn, pressed) {
-                this.store.autoSave = pressed;
-            },
-            scope: this
-        }, '-', {
-            text: 'batch',
-            iconCls: 'silk-batch',
-            enableToggle: true,
-            tooltip: 'When enabled, Store will batch all records for each type of CRUD verb into a single Ajax request.',
-            toggleHandler: function(btn, pressed) {
-                this.store.batch = pressed;
-            },
-            scope: this
-        }, '-', {
-            text: 'writeAllFields',
-            iconCls: 'silk-write',
-            enableToggle: true,
-            tooltip: 'When enabled, Writer will write *all* fields to the server -- not just those that changed.',
-            toggleHandler: function(btn, pressed) {
-                this.store.writer.writeAllFields = pressed;
-            },
-            scope: this
-        }, '->', {
+        }, 
+        '->', 
+        {
             text: 'Save',
             iconCls: 'silk-save',
             handler: this.onSave,
@@ -101,29 +103,76 @@ App.hotel.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
         }];
     },
 
+    buildBottomToolbar : function() {
+    	return new Ext.PagingToolbar({
+            pageSize: 25,
+            store: this.store,
+            displayInfo: true,
+            displayMsg: 'Displaying topics {0} - {1} of {2}',
+            emptyMsg: "No topics to display",
+            items:[
+                '-',
+                {
+                    text: 'autoSave',            
+                    iconCls: 'silk-auto-save',
+                    enableToggle: true,
+                    pressed: false,
+                    tooltip: 'When enabled, Store will execute Ajax requests as soon as a Record becomes dirty.',
+                    toggleHandler: function(btn, pressed) {
+                        this.store.autoSave = pressed;
+                    },
+                    scope: this
+                }, 
+                {
+                    text: 'batch',
+                    iconCls: 'silk-batch',
+                    enableToggle: true,
+                    tooltip: 'When enabled, Store will batch all records for each type of CRUD verb into a single Ajax request.',
+                    toggleHandler: function(btn, pressed) {
+                        this.store.batch = pressed;
+                    },
+                    scope: this
+                }, 
+                {
+                    text: 'writeAllFields',
+                    iconCls: 'silk-write',
+                    enableToggle: true,
+                    tooltip: 'When enabled, Writer will write *all* fields to the server -- not just those that changed.',
+                    toggleHandler: function(btn, pressed) {
+                        this.store.writer.writeAllFields = pressed;
+                    },
+                    scope: this
+                }
+            ]
+    	});
+    	
+    },
+
     onSave : function(btn, ev) {
         this.store.save();
     },
 
     onAdd : function(btn, ev) {
-    	/*
         var u = new this.store.recordType({
-            first : '',
-            last: '',
-            email : ''
+            name : '',
+            website: '',
+            phoneNumber : '',
+            city : '',
+            country : '',
+            stars : '',
+            rooms : '',
+            beds : ''
         });
-        this.stopEditing();
+        this.editor.stopEditing();
         this.store.insert(0, u);
-        this.startEditing(0, 1);
-        */
+        this.editor.startEditing(0);
     },
 
     onDelete : function(btn, ev) {
-        var index = this.getSelectionModel().getSelectedCell();
-        if (!index) {
+    	var rec = this.getSelectionModel().getSelected();
+        if (!rec) {
             return false;
         }
-        var rec = this.store.getAt(index[0]);
         this.store.remove(rec);
     }
 });
@@ -148,10 +197,11 @@ Ext.onReady(function() {
 	});
 
     var writer = new Ext.data.JsonWriter({
-  		writeAllFields: true,
-  		listful : true
+  		writeAllFields: false,
+  		listful : true,
+  		encode: true
   	});
-
+    
     var hotelStore = new Ext.data.Store({
         proxy: new Ext.ux.data.DwrProxy({
       	  apiActionToHandlerMap : {
@@ -171,15 +221,23 @@ Ext.onReady(function() {
   		}),
   		reader: reader,
   		writer: writer,
-  		autoSave: true,
+  		autoSave: false,
   		sortInfo:{field: 'id', direction: 'ASC'}
     });
     
     hotelStore.load();
     
-    
     var hotelGrid = new App.hotel.Grid({
         renderTo: 'hotel-grid',
         store: hotelStore
     });
+    
+	Ext.data.DataProxy.addListener('write', function(proxy, action, result, res, rs) {
+		App.setAlert(true, action + ':' + res.message);
+		hotelGrid.getView().refresh();
+	});
+
+	Ext.data.DataProxy.addListener('exception', function(proxy, type, action, options, res) {
+		App.setAlert(false, "Something bad happend while executing " + action);
+	});
 });
